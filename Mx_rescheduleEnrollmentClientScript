@@ -1,0 +1,118 @@
+// Step 1: Collect all selected record IDs
+let all_records_list = context.records.map(r => r.id);
+log("Selected Records: " + all_records_list);
+
+let firstRecordId = all_records_list[0];
+
+// Reason options
+let reasons = [
+    "ظروف صحية (مراجعة طبية أو وعكة صحية)",
+    "تعارض مع أوقات العمل أو الارتباط بدورات تدريبية أخرى",
+    "انقطاع خدمة الإنترنت أو ضعف الاتصال بالشبكة",
+    "عدم معرفة كيفية وصول رابط الدخول إلى الدورة",
+    "لم يتم الرد",
+    "ليس لديها مواصلات",
+    "لا ترغب",
+    "مرافقة مريض",
+    "التزامات أسرية",
+    "رعاية طفل أو كبير سن",
+    "ظرف سفر"
+];
+
+// Step 3: Check Enrollment Status
+let invalidStatusRecords = [];
+for (let id of all_records_list) {
+    let data = ZDK.Apps.CRM.Enrollment.fetchById(id);
+    if (data) {
+        let status = data.Status;
+        if (status !== "Enrolled" && status !== "Cancelled") {
+            invalidStatusRecords.push(status);
+        }
+    }
+}
+
+if (invalidStatusRecords.length > 0) {
+    return await ZDK.Client.showAlert(
+        "⚠ Cannot reschedule these enrollments.\n" +
+        "Invalid Status: " + invalidStatusRecords.join(", ") + "\n" +
+        "Allowed Status: Enrolled or Cancelled only."
+    );
+}
+
+// Step 4: Call backend function to get instances
+let get_all_Instance = ZDK.Apps.CRM.Functions.execute("get_all_course_instant_name_for_ben1", {});
+let output = get_all_Instance.details.output;
+log("Function Output: " + output);
+
+// Check if no seats available
+if (output && output.split(",").every(val => val.trim() === "0")) {
+    await ZDK.Client.showAlert("Instance Seats are not available");
+    return;
+}
+
+// Step 5: Show picklist for instance
+if (output && typeof output === "string") {
+    let options_list = output.split(",").map(name => ({
+        actual_value: name.trim(),
+        display_value: name.trim()
+    }));
+
+    let instance_input =  ZDK.Client.getInput(
+        [{
+            type: 'picklist',
+            label: 'Select Instance',
+            list_options: options_list,
+            default_value: options_list[0].actual_value
+        }],
+        'Select Course Instance to Create Enrollment',
+        'Select',
+        'Cancel'
+    );
+
+    if (instance_input && instance_input.length > 0) {
+        let selected_instance = instance_input[0];
+
+        // Step 6: Ask for Reason (Mandatory)
+        let reason_input =  ZDK.Client.getInput(
+            [{
+                type: 'picklist',
+                label: 'Select Reason',
+                list_options: reasons.map(r => ({ actual_value: r, display_value: r })),
+                default_value: reasons[0]
+            }],
+            'Please select a reason for rescheduling',
+            'Submit',
+            'Cancel'
+        );
+
+        if (!reason_input || reason_input.length === 0) {
+            await ZDK.Client.showAlert("Reason selection is mandatory.");
+            return;
+        }
+
+        let selected_reason = reason_input[0];
+
+        // Confirmation
+        let confirm =  ZDK.Client.showConfirmation(
+            `Confirm creating enrollment for selected records in "${selected_instance}"\n and Reason: ${selected_reason}`,
+            'Confirm',
+            'Cancel'
+        );
+
+        if (confirm === true) {
+            for (let id of all_records_list) {
+                response = ZDK.Apps.CRM.Functions.execute("create_enrollment_from_ben_clientscript1", {
+                    EnrollID: id.toString(),
+                    CI: selected_instance,
+                    Reason: selected_reason 
+                });
+            }
+
+            await ZDK.Client.showAlert("The enrollment has been created successfully.");
+            ZDK.Client.hideLoader();
+            $Client.refresh();
+        }
+    }
+} else {
+    await ZDK.Client.showAlert("No instance Available");
+}
