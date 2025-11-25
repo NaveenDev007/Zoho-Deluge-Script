@@ -1,0 +1,34 @@
+string standalone.Create_Enrollment_from_Enroll_ClientScript(String EnrollID,String CI,String Reason)
+{
+EnrollList = EnrollID.toList("|||");
+info EnrollList;
+for each  rec in EnrollList
+{
+	/* UPDATE PREVIOUS RECORD */
+	uprec = Map();
+	uprec.put("Status","Rescheduled");
+	uprec.put("Reschedule_Reason",Reason);
+	up = zoho.crm.updateRecord("Enrollment",rec,uprec);
+	EnrollInfo = zoho.crm.getRecordById("Enrollment",rec);
+	/* CREATE NEW RECORD */
+	CID = EnrollInfo.get("Contact_TC").get("id");
+	if(EnrollInfo.get("Ben_engagement") != null)
+	{
+		Ben_ID = EnrollInfo.get("Ben_engagement").get("id");
+		E_name = EnrollInfo.get("Ben_engagement").get("name");
+	}
+	instance_id = zoho.crm.searchRecords("Course_Instance","(Name:equals:" + CI + ")").get(0).get("id");
+	info instance_id;
+	createRec = Map();
+	createRec.put("Name","Enroll 4 " + E_name);
+	createRec.put("Course_Instance_TC",instance_id);
+	createRec.put("Contact_TC",CID);
+	createRec.put("Enrollment_Date",zoho.currentdate);
+	layoutid = {"id":"1806000215582802"};
+	createRec.put("Layout",layoutid);
+	createRec.put("Ben_engagement",Ben_ID);
+	createRec.put("Status","Enrolled");
+	createNewEnroll = zoho.crm.createRecord("Enrollment",createRec,{"trigger":{"workflow"}});
+}
+return createNewEnroll;
+}
