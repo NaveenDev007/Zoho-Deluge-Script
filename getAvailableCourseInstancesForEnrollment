@@ -1,0 +1,42 @@
+string standalone.Get_all_course_Instant_name_for_Enroll()
+{
+queryMap = Map();
+queryMap.put("select_query","select Name, Available_Seats, id from Course_Instance where Status_TC = 'Published' order by Name limit 2000");
+response = invokeurl
+[
+	url :"https://crmplus.zoho.sa/crm/v6/coql"
+	type :POST
+	parameters:queryMap.toString()
+	connection:"zcrm_coql"
+];
+//info response;
+if(response == "")
+{
+	return 0;
+}
+Course_Ins = response.get("data");
+Instance_list = List();
+count = 0;
+for each  rec in Course_Ins
+{
+	Course_Ins_Name = rec.get("Name");
+	Available_Seats = rec.get("Available_Seats");
+	info Available_Seats;
+	if(Available_Seats != null && Available_Seats > 0)
+	{
+		Instance_list.add(Course_Ins_Name);
+	}
+	else if(Available_Seats != null && Available_Seats <= 0)
+	{
+		count = count + 1;
+	}
+}
+// If all records have zero seats, add a single "0"
+if(count == Course_Ins.size())
+{
+	Instance_list.clear();
+	Instance_list.add("0");
+}
+info Instance_list;
+return Instance_list.toString();
+}
