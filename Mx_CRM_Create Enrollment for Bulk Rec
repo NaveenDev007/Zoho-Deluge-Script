@@ -1,0 +1,169 @@
+// Step 1: Collect all selected record IDs
+let all_records_list = context.records.map(r => r.id);
+log("Selected Records: " + all_records_list);
+let firstRecordId = all_records_list[0];
+// Step 2: Fetch the values in Lists
+let records = [];
+let contactIds = [];
+let benStatus = [];
+for (let id of all_records_list) {
+    let data =ZDK.Apps.CRM.Ben_Engaments.fetchById(id);
+    if (data) {
+        records.push(data.Moodle_Course_ID);
+        contactIds.push(data._Beneficiary_Lookup_Id); 
+        benStatus.push(data.Beneficiary_Engagement_Status);
+    }
+}
+log("Moodle IDs: " + records);
+log("contactIds: " + JSON.stringify(contactIds));
+// Step 3: Check for unique Moodle IDs
+if (all_records_list.length> 1)
+{
+    let uniqueNumbers = records.filter((item, i) => records.indexOf(item) === records.lastIndexOf(item));
+    if (uniqueNumbers.length > 0) {
+    return await ZDK.Client.showAlert(
+        "Cannot Create Enrollment for different Moodle IDs: " + uniqueNumbers.join(", ") +
+        "\nPlease select records with the same Moodle ID."
+    );
+}
+}
+// Show loader
+    ZDK.Client.showLoader({
+        type: 'page',
+        template: 'vertical-bar',
+        message: 'Loading ...'
+    });
+/* STEP 4: CRIETRIA VALIDATION (OFFICE LOCATION LINK, ELIGIBILITY)*/
+let param = {ConID: String(contactIds)};
+let crietria = ZDK.Apps.CRM.Functions.execute("checkofficelocationfrombeneng", param).details.output;
+log("Critetia: " + crietria);
+// Hide loader
+        ZDK.Client.hideLoader();
+    if (crietria != "Validated Successfully") {
+        ZDK.Client.showAlert(crietria);
+        return;
+    }
+/* STEP 5: CHECK THE BEN STATUS */
+// Disqualified statuses
+let disqulifiedStatuses = ["In Progress", "Rejected", "Evidenced", "Completed", "Cancelled"];
+
+// Find invalid records and their statuses
+let invalidRecords = all_records_list.map((id, index) => ({ id: id, status: benStatus[index] }))
+    .filter(record => disqulifiedStatuses.includes(record.status));
+
+if (invalidRecords.length > 0) {
+    let invalidStatusList = invalidRecords.map(r => `${r.id} (${r.status})`).join(", ");
+    return await ZDK.Client.showAlert(
+        "Cannot create enrollment for Invalid records status: " + invalidStatusList
+    );
+}
+// Step 6: Call backend function to get instances
+let params = { benID: String(firstRecordId) };
+let get_all_Instance = ZDK.Apps.CRM.Functions.execute("get_all_course_instant_name", params);
+let output = get_all_Instance.details.output;
+log("Function Output: " + output);
+
+/* CHECK THE AVAILABLE SEATS, INSTANCE STATUS AND OFFICE NAME */
+if (output == "No Course Catalog found for this Intervention.") {
+    await ZDK.Client.showAlert(output);
+    return; // Stop further execution
+}
+else if (output == "No Course Instances found for this Course Catalog") {
+    await ZDK.Client.showAlert(output);
+    return; 
+}
+else if (output == "Kindly check Available Seats and Status TC") {
+    await ZDK.Client.showAlert(output);
+    return; 
+}
+else if (output == "Office name mismatch between Course and Contact module") {
+    await ZDK.Client.showAlert(output);
+    return; // Stop further execution
+}
+// Step 7: Show picklist if output exists
+if (output && typeof output === "string") {
+    let options_list = output.split(",").map(name => ({
+        actual_value: name.trim(),
+        display_value: name.trim()
+    }));
+
+    let instance_input = ZDK.Client.getInput(
+[{
+type: 'picklist',
+label: 'Select Instance',
+list_options: options_list,
+default_value: options_list[0].actual_value
+}],
+'Select Course Instance to Create Enrollment',
+'Select',
+'Cancel'
+);
+    log("User Selected: " + JSON.stringify(instance_input));
+// Convert to string and extract ID
+        let selected_value = instance_input[0];
+        let selected_instance = String(selected_value).split(":")[0];
+        log("Extracted Instance ID: " + selected_instance);
+
+
+    /* VALIDATE SESSION TIME OVERLAPPING */
+    let value = { contactId: contactIds, instanceId: String(selected_instance) };
+    
+    // Show loader
+    ZDK.Client.showLoader({
+        type: 'page',
+        template: 'vertical-bar',
+        message: 'Loading ...'
+    });
+
+    let overlapResponse = ZDK.Apps.CRM.Functions.execute("mx_tc_sessiontimeoverlapcheckforben1_1",value).details.output;
+    log("Overlap Response: " + overlapResponse);
+    
+        // Hide loader
+        ZDK.Client.hideLoader();
+
+    // Build confirmation message
+    if (overlapResponse == "Selected course instance not found.")
+    {
+        ZDK.Client.showAlert(overlapResponse)
+        return;
+}
+    if (overlapResponse == "No sessions found for the selected course instance.")
+    {
+        ZDK.Client.showAlert(overlapResponse)
+    return;}
+    let message = overlapResponse != "False"
+        ? `${overlapResponse}\nDo you want to continue?`
+        : `Confirm creating enrollment for ${all_records_list.length > 1 ? 'selected records' : 'this record'} in "${selected_value}"?`;
+
+    // Show confirmation dialog
+    let proceed = ZDK.Client.showConfirmation(message,'Continue','Cancel');
+    if (proceed) {
+        // Show loader
+    ZDK.Client.showLoader({
+        type: 'page',
+        template: 'vertical-bar',
+        message: 'Creating ...'
+    });
+      // Create enrollments if confirmed
+    let enrollmentResults = [];
+    for (let id of all_records_list) {
+        let result = ZDK.Apps.CRM.Functions.execute("create_new_enrollment_from_clientscript",
+            {benID: id.toString(),
+                CI: selected_instance
+                });
+        enrollmentResults.push(result.details.output);
+        }
+    // Hide loader
+        ZDK.Client.hideLoader();
+
+        // Show success message
+        ZDK.Client.showAlert("Enrollment(s) created successfully.");
+    log("Enrollment Results: ", enrollmentResults);
+    // Refresh UI
+    $Client.refresh();  
+    }
+    ZDK.Client.showAlert("Action canceled.");
+        return;
+} else {
+    await ZDK.Client.showAlert("No instance available for this Moodle.");
+}
