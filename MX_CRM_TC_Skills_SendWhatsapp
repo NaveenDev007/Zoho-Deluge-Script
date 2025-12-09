@@ -1,0 +1,54 @@
+string standalone.MX_TC_Skills_SendWhatsapp(String templateInfo,String cMobil)
+{
+//Get Temp ID
+tempId = templateInfo.getPrefix("~");
+info tempId;
+// --- Config ---
+toNumber = cMobil.toString();
+clientID = "HRSDTCat6obiu7tld1w9gnoc";
+clientPassword = "666n51x38f7y7f0134z2rllws0f65awr";
+// --- Build addresses list ---
+addr = Map();
+addr.put("seq","1");
+addr.put("to",cMobil);
+addr.put("from","966920031377");
+addr.put("tag","user_id:3");
+addresses = List();
+addresses.add(addr);
+// --- Build message object ---
+msg = Map();
+msg.put("coding",1);
+msg.put("id",tempId);
+msg.put("msgtype",1);
+msg.put("templateinfo",templateInfo);
+msg.put("addresses",addresses);
+messages = List();
+messages.add(msg);
+// --- Build whatsapp object ---
+dlr = Map();
+dlr.put("url","");
+whatsapp = Map();
+whatsapp.put("ver","2.0");
+whatsapp.put("dlr",dlr);
+whatsapp.put("messages",messages);
+// --- Final body ---
+body = Map();
+body.put("apiver","1.0");
+body.put("whatsapp",whatsapp);
+// Optional: inspect payload
+info body;
+// --- Headers ---
+headersMap = Map();
+headersMap.put("x-client-id",clientID);
+headersMap.put("x-client-password",clientPassword);
+// --- Invoke API ---
+whatsApp = invokeurl
+[
+	url :"https://api.goinfinito.me/unified/v2/send"
+	type :POST
+	parameters:body.toString()
+	headers:headersMap
+	content-type:" application/json"
+];
+return whatsApp.toString();
+}
