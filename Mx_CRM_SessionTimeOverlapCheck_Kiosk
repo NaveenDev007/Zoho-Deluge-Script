@@ -1,0 +1,99 @@
+string automation.SessionTimeOverlapCheck_Kiosk(String contactId,String instanceId)
+{
+contactList = contactId.toList();
+info contactList;
+// Fetch selected course instance
+instance = zoho.crm.getRecordById("Course_Instance",instanceId);
+if(instance == null)
+{
+	return "Selected course instance not found.";
+}
+// Fetch sessions for selected instance
+selectedSessions = zoho.crm.getRelatedRecords("Sessions_TC","Course_Instance",instanceId);
+if(selectedSessions == null || selectedSessions.isEmpty())
+{
+	return "No sessions found for the selected course instance.";
+}
+// Prepare selected session time ranges
+selectedSessionList = List();
+for each  selectedSession in selectedSessions
+{
+	startTime = selectedSession.get("Start_Time");
+	endTime = selectedSession.get("End_Time");
+	if(startTime != null && endTime != null)
+	{
+		selectedSessionList.add({"start":startTime,"end":endTime});
+	}
+}
+finalMessage = "";
+for each  contactId in contactList
+{
+	overlappingInstanceNames = List();
+	processedInstanceIds = List();
+	// Fetch enrollments for this contact
+	enrollments = zoho.crm.getRelatedRecords("Course_Enrollment_TC","Contacts",contactId);
+	if(enrollments != null && enrollments.size() > 0)
+	{
+		for each  enroll in enrollments
+		{
+			enrollStatus = enroll.get("Status");
+			enrollInstanceId = if(enroll.get("Course_Instance_TC") != null,enroll.get("Course_Instance_TC").get("id"),null);
+			if((enrollStatus == "Enrolled" || enrollStatus == "In Progress") && enrollInstanceId != instanceId && !processedInstanceIds.contains(enrollInstanceId))
+			{
+				enrollSessions = zoho.crm.getRelatedRecords("Sessions_TC","Course_Instance",enrollInstanceId);
+				if(enrollSessions != null && enrollSessions.size() > 0)
+				{
+					hasOverlap = false;
+					for each  enrollSession in enrollSessions
+					{
+						enrollStart = enrollSession.get("Start_Time");
+						enrollEnd = enrollSession.get("End_Time");
+						if(enrollStart != null && enrollEnd != null)
+						{
+							for each  selectedTime in selectedSessionList
+							{
+								selectedStart = selectedTime.get("start");
+								selectedEnd = selectedTime.get("end");
+								info "selectedStart: " + selectedStart;
+								info "selectedEnd: " + selectedEnd;
+								info "enrollEndTime: " + enrollStart;
+								info "enrollStartTime: " + enrollEnd;
+								if(selectedTime.get("start").toTime("yyyy-MM-dd'T'HH:mm:ss") <= enrollEnd.toTime("yyyy-MM-dd'T'HH:mm:ss") && enrollStart.toTime("yyyy-MM-dd'T'HH:mm:ss") <= selectedTime.get("end").toTime("yyyy-MM-dd'T'HH:mm:ss"))
+								{
+									hasOverlap = true;
+									break;
+								}
+							}
+						}
+						if(hasOverlap)
+						{
+							break;
+						}
+					}
+					if(hasOverlap)
+					{
+						instanceName = if(enroll.get("Course_Instance_TC") != null,enroll.get("Course_Instance_TC").get("name"),"Instance ID: " + enrollInstanceId);
+						overlappingInstanceNames.add(instanceName);
+						processedInstanceIds.add(enrollInstanceId);
+					}
+				}
+			}
+		}
+	}
+	if(overlappingInstanceNames.size() > 0)
+	{
+		contactName = zoho.crm.getRecordById("Contacts",contactId).get("Full_Name");
+		finalMessage = finalMessage + "Contact: " + contactName + " has overlaps with: ";
+		for each  name in overlappingInstanceNames
+		{
+			finalMessage = finalMessage + "- " + name + " ";
+		}
+		finalMessage = finalMessage + " ";
+	}
+}
+if(finalMessage != "")
+{
+	return "Time overlap detected!  " + finalMessage;
+}
+return "False";
+}
