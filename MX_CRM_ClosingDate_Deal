@@ -1,0 +1,29 @@
+string standalone.ClosingDate_Deal(Date Closing_date)
+{
+today = zoho.currentdate;
+maxAllowed = today.addDay(60);
+closingDate = Closing_date.toDate("yyyy-MM-dd");
+LoginUserId = zoho.loginuserid;
+SkillTeam = list();
+SkillTeam.addAll({"salgarni@maximusgulf.com","nsalmajid@maximusgulf.com","walwaqfi@maximusgulf.com","jakther@maximusgulf.com"});
+if(SkillTeam.contains(LoginUserId))
+{
+	if(closingDate < today)
+	{
+		return "Closing Date cannot be in the past";
+	}
+	return True;
+}
+else
+{
+	if(closingDate < today)
+	{
+		return "Closing Date cannot be in the past";
+	}
+	if(closingDate > maxAllowed)
+	{
+		return "Closing Date must be within the next 60 days";
+	}
+	return True;
+}
+}
