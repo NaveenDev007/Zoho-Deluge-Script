@@ -1,0 +1,27 @@
+Pre_Screen_Attendees = invokeurl
+[
+	url :"https://recruit.zoho.sa/recruit/v2/Pre_Screen_Attendees/" + id + "/Interviews"
+	type :GET
+	connection:"recrruit2recruit"
+];
+getInfo = Pre_Screen_Attendees.get("data");
+if(getInfo.size() > 0)
+{
+	interviewID = getInfo.get(0).get("id");
+	info interviewID;
+}
+/* 	-------UPDATE INTERVIEW ID----------- */
+IntIdList = List();
+IntIdMap = Map();
+IntIdMap.put("Interview_ID",interviewID);
+IntIdList.add(IntIdMap);
+dataMap1 = Map();
+dataMap1.put("data",IntIdList);
+updateAttendees = invokeurl
+[
+	url :"https://recruit.zoho.sa/recruit/v2/Pre_Screen_Attendees/" + id
+	type :PUT
+	parameters:dataMap1.tostring()
+	connection:"recrruit2recruit"
+];
+info updateAttendees;
