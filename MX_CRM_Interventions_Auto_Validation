@@ -1,0 +1,66 @@
+void automation.Interventions_Auto_Validation(Int id)
+{
+BenInfo = zoho.crm.getRecordById("Ben_Engaments",id);
+ConId = BenInfo.get("Beneficiary").get("id");
+ContactInfo = zoho.crm.getRecordById("Contacts",ConId);
+Eligibility_Status = ContactInfo.get("Eligibility_Status");
+IntType = BenInfo.get("Intervention_Type");
+IntName = BenInfo.get("Intervention_Name").get("name");
+IntCategory = BenInfo.get("Intervention_Category");
+IntSubCategory = BenInfo.get("Intervention_Sub_Category");
+Partner = BenInfo.get("Partner").get("name");
+Completed_Date = BenInfo.get("Completed_Date");
+Ben_Eng_CreatorID = BenInfo.get("Creator_Rec_ID");
+Is_Signed = BenInfo.get("Is_Signed");
+zoho_sign_request_id = BenInfo.get("zoho_sign_request_id");
+Moodle_Course_ID = BenInfo.get("Moodle_Course_ID");
+Partner_Sign_Date = BenInfo.get("Partner_Signature_Date");
+CM_Sign_Date = BenInfo.get("Case_Manager_Signature_Date");
+Int_Valid_Method = BenInfo.get("Interventions_Validation_Method");
+/* ----------INFOS---------  */
+info "ConId : " + ConId;
+info "Eligibility_Status : " + Eligibility_Status;
+info "Intervention_Type : " + IntType;
+info "Intervention_Name : " + IntName;
+info "Intervention_Category : " + IntCategory;
+info "Intervention_Sub_Category : " + IntSubCategory;
+info "Partner : " + Partner;
+info "Completed_Date : " + Completed_Date;
+info "Creator_Rec_ID : " + Ben_Eng_CreatorID;
+info "Is_Signed : " + Is_Signed;
+info "zoho_sign_request_id : " + zoho_sign_request_id;
+info "Moodle_Course_ID : " + Moodle_Course_ID;
+info "Partner_Signature_Date : " + Partner_Sign_Date;
+info "Case_Manager_Signature_Date : " + CM_Sign_Date;
+/* ----------UPDATE THE BLUPRINT STATUS------------ */
+if(!isNull(ConId) && !isNull(IntType) && !isNull(IntName) && !isNull(IntCategory) && !isNull(IntSubCategory) && !isNull(Partner) && !isNull(Completed_Date) && !isNull(Ben_Eng_CreatorID) && Is_Signed == true && !isNull(zoho_sign_request_id) && isNull(Moodle_Course_ID) && !isNull(Partner_Sign_Date) && !isNull(CM_Sign_Date) && Eligibility_Status == "Eligible for Program")
+{
+	/* VALID_ID - 1806000095371043 */
+	blueprint1 = Map();
+	blueprint1.put("transition_id","1806000095371043");
+	blueprintList = List();
+	blueprintList.add(blueprint1);
+	param = Map();
+	param.put("blueprint",blueprintList);
+	response = invokeurl
+	[
+		url :"https://www.zohoapis.sa/crm/v8/Ben_Engaments/" + id + "/actions/blueprint"
+		type :PUT
+		parameters:param.toString()
+		connection:"zcrm"
+	];
+	info response;
+	/* ------------UPDATE THE INTERVENTION VALIDATION METHODE STATUS------------- */
+	dataMap = Map();
+	dataMap.put("Interventions_Validation_Method","Auto");
+	updateBenRec = zoho.crm.updateRecord("Ben_Engaments",id,dataMap);
+	info updateBenRec;
+}
+// sendmail
+// [
+// 	from :zoho.loginuserid
+// 	to :"nkumar@maximusgulf.com"
+// 	subject :"Intervention"
+// 	message :"Intervention Test" + response
+// ]
+}
