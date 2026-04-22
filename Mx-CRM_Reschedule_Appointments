@@ -1,0 +1,643 @@
+void automation.Reschedule_Appointments(Int id,String Service,String user_id)
+{
+serviceid = "";
+workspacename = "";
+info id;
+Meeting_ID = zoho.crm.getRecordById("Events",id);
+Con_id = Meeting_ID.get("Who_Id").get("id");
+contact_info = zoho.crm.getRecordById("Contacts",Con_id);
+//info contact_info;
+fName = ifnull(contact_info.get("First_Name"),"");
+lName = ifnull(contact_info.get("Last_Name"),"");
+phone = ifnull(contact_info.get("Mobile"),"");
+email = ifnull(contact_info.get("Email"),"");
+nin = ifnull(contact_info.get("Beneficiary_NIN"),"");
+Gender = ifnull(contact_info.get("Gender"),"");
+Location = ifnull(contact_info.get("Office"),"");
+source = ifnull(contact_info.get("Ben_Source"),"");
+info "Name: " + fName + " " + lName;
+info "Phone: " + phone;
+info "Email: " + email;
+info "NIN: " + nin;
+info "Gender: " + Gender;
+info "Office: " + Location;
+info "Source: " + source;
+leadsearch = zoho.crm.searchRecords("Contacts","(NIN:equals:" + nin + ") or (Email:equals:" + email + ")",1,200," ","zcrm");
+if(leadsearch != null)
+{
+	staffid = leadsearch.getJson("Staff_ID");
+}
+info staffid;
+if(Gender == "Male" && Location == "TeleTamkeen" || Location == "Tele Tamkeen" && Service == "Assessment")
+{
+	serviceid = "1311000013893646";
+	workspacename = "Tele Tamkeen";
+}
+if(Gender == "Female" && Location == "TeleTamkeen" || Location == "Tele Tamkeen" && Service == "Assessment")
+{
+	serviceid = "1311000013893714";
+	workspacename = "Tele Tamkeen";
+}
+if(Gender == "Male" && Location == "TeleTamkeen" || Location == "Tele Tamkeen" && Service == "Re-Assessment")
+{
+	serviceid = "1311000015119722";
+	workspacename = "Tele Tamkeen";
+}
+if(Gender == "Female" && Location == "TeleTamkeen" || Location == "Tele Tamkeen" && Service == "Re-Assessment")
+{
+	serviceid = "1311000015119748";
+	workspacename = "Tele Tamkeen";
+}
+else if(Gender == "Female" && Location == "Riyadh" && Service == "Assessment")
+{
+	serviceid = "1311000000084046";
+	workspacename = "riyadh";
+}
+if(Gender == "Male" && Location == "TeleTamkeen" || Location == "Tele Tamkeen" && Service == "Follow up")
+{
+	serviceid = "1311000015119774";
+	workspacename = "Tele Tamkeen";
+}
+if(Gender == "Female" && Location == "TeleTamkeen" || Location == "Tele Tamkeen" && Service == "Follow up")
+{
+	serviceid = "1311000015119800";
+	workspacename = "Tele Tamkeen";
+}
+// We need to add all locations with the same behavior for Riyadh
+if(Gender == "Male" && Location == "Riyadh" && Service == "Assessment")
+{
+	serviceid = "1311000000084030";
+	workspacename = "riyadh";
+}
+else if(Gender == "Male" && Location == "Riyadh" && Service == "Tele Tamkeen")
+{
+	serviceid = "1311000011648998";
+	workspacename = "riyadh";
+}
+else if(Gender == "Female" && Location == "Riyadh" && Service == "Tele Tamkeen")
+{
+	serviceid = "1311000011649044";
+	workspacename = "riyadh";
+}
+else if(Gender == "Male" && Location == "Riyadh" && Service == "Re-Assessment")
+{
+	serviceid = "1311000000084064";
+	workspacename = "riyadh";
+}
+else if(Gender == "Female" && Location == "Riyadh" && Service == "Re-Assessment")
+{
+	serviceid = "1311000000084080";
+	workspacename = "riyadh";
+}
+else if(Gender == "Male" && Location == "Riyadh" && Service == "Supported Application")
+{
+	serviceid = "1311000000084094";
+	workspacename = "riyadh";
+}
+else if(Gender == "Female" && Location == "Riyadh" && Service == "Supported Application")
+{
+	serviceid = "1311000000084108";
+	workspacename = "riyadh";
+}
+else if(Gender == "Male" && Location == "Riyadh" && Service == "Follow up")
+{
+	serviceid = "1311000000084122";
+	workspacename = "riyadh";
+}
+else if(Gender == "Female" && Location == "Riyadh" && Service == "Follow up")
+{
+	serviceid = "1311000000084136";
+	workspacename = "riyadh";
+}
+else if(Gender == "Male" && Location == "Riyadh" && Service == "Intervention")
+{
+	serviceid = "1311000000084150";
+	workspacename = "riyadh";
+}
+else if(Gender == "Female" && Location == "Riyadh" && Service == "Intervention")
+{
+	serviceid = "1311000000084164";
+	workspacename = "riyadh";
+}
+else if(Gender == "Male" && Location == "Riyadh" && Service == "Online Assessment")
+{
+	serviceid = "1311000002381267";
+	workspacename = "riyadh";
+}
+else if(Gender == "Female" && Location == "Riyadh" && Service == "Online Assessment")
+{
+	serviceid = "1311000004513576";
+	workspacename = "riyadh";
+}
+else if(Gender == "Male" && Location == "Najran" && Service == "Assessment")
+{
+	serviceid = "1311000000090174";
+	workspacename = "najran";
+}
+else if(Gender == "Female" && Location == "Najran" && Service == "Assessment")
+{
+	serviceid = "1311000000090210";
+	workspacename = "najran";
+}
+else if(Gender == "Male" && Location == "Najran" && Service == "Tele Tamkeen")
+{
+	serviceid = "1311000011658836";
+	workspacename = "najran";
+}
+else if(Gender == "Female" && Location == "Najran" && Service == "Tele Tamkeen")
+{
+	serviceid = "1311000011658926";
+	workspacename = "najran";
+}
+else if(Gender == "Male" && Location == "Najran" && Service == "Re-Assessment")
+{
+	serviceid = "1311000000090290";
+	workspacename = "najran";
+}
+else if(Gender == "Female" && Location == "Najran" && Service == "Re-Assessment")
+{
+	serviceid = "1311000000090312";
+	workspacename = "najran";
+}
+else if(Gender == "Male" && Location == "Najran" && Service == "Supported Application")
+{
+	serviceid = "1311000000090518";
+	workspacename = "najran";
+}
+else if(Gender == "Female" && Location == "Najran" && Service == "Supported Application")
+{
+	serviceid = "1311000000090334";
+	workspacename = "najran";
+}
+else if(Gender == "Male" && Location == "Najran" && Service == "Follow up")
+{
+	serviceid = "1311000000090474";
+	workspacename = "najran";
+}
+else if(Gender == "Female" && Location == "Najran" && Service == "Follow up")
+{
+	serviceid = "1311000000090496";
+	workspacename = "najran";
+}
+else if(Gender == "Male" && Location == "Najran" && Service == "Intervention")
+{
+	serviceid = "1311000000090356";
+	workspacename = "najran";
+}
+else if(Gender == "Female" && Location == "Najran" && Service == "Intervention")
+{
+	serviceid = "1311000000090390";
+	workspacename = "najran";
+}
+else if(Gender == "Male" && Location == "Najran" && Service == "Online Assessment")
+{
+	serviceid = "1311000004514776";
+	workspacename = "najran";
+}
+else if(Gender == "Female" && Location == "Najran" && Service == "Online Assessment")
+{
+	serviceid = "1311000004514868";
+	workspacename = "najran";
+}
+else if(Gender == "Male" && Location == "Dammam" && Service == "Assessment")
+{
+	serviceid = "1311000000090564";
+	workspacename = "dammam";
+}
+else if(Gender == "Female" && Location == "Dammam" && Service == "Assessment")
+{
+	serviceid = "1311000000090600";
+	workspacename = "dammam";
+}
+else if(Gender == "Male" && Location == "Dammam" && Service == "Tele Tamkeen")
+{
+	serviceid = "1311000011648148";
+	workspacename = "dammam";
+}
+else if(Gender == "Female" && Location == "Dammam" && Service == "Tele Tamkeen")
+{
+	serviceid = "1311000011648816";
+	workspacename = "dammam";
+}
+else if(Gender == "Male" && Location == "Dammam" && Service == "Re-Assessment")
+{
+	serviceid = "1311000000090680";
+	workspacename = "dammam";
+}
+else if(Gender == "Female" && Location == "Dammam" && Service == "Re-Assessment")
+{
+	serviceid = "1311000000090702";
+	workspacename = "dammam";
+}
+else if(Gender == "Male" && Location == "Dammam" && Service == "Supported Application")
+{
+	serviceid = "1311000000090746";
+	workspacename = "dammam";
+}
+else if(Gender == "Female" && Location == "Dammam" && Service == "Supported Application")
+{
+	serviceid = "1311000000090768";
+	workspacename = "dammam";
+}
+else if(Gender == "Male" && Location == "Dammam" && Service == "Follow up")
+{
+	serviceid = "1311000000090908";
+	workspacename = "dammam";
+}
+else if(Gender == "Female" && Location == "Dammam" && Service == "Follow up")
+{
+	serviceid = "1311000000090930";
+	workspacename = "dammam";
+}
+else if(Gender == "Male" && Location == "Dammam" && Service == "Intervention")
+{
+	serviceid = "1311000000090790";
+	workspacename = "dammam";
+}
+else if(Gender == "Female" && Location == "Dammam" && Service == "Intervention")
+{
+	serviceid = "1311000000090824";
+	workspacename = "dammam";
+}
+else if(Gender == "Male" && Location == "Dammam" && Service == "Online Assessment")
+{
+	serviceid = "1311000003265982";
+	workspacename = "dammam";
+}
+else if(Gender == "Female" && Location == "Dammam" && Service == "Online Assessment")
+{
+	serviceid = "1311000003266080";
+	workspacename = "dammam";
+}
+else if(Gender == "Male" && Location == "Jeddah" && Service == "Assessment")
+{
+	serviceid = "1311000000090976";
+	workspacename = "jeddah";
+}
+else if(Gender == "Female" && Location == "Jeddah" && Service == "Assessment")
+{
+	serviceid = "1311000000091012";
+	workspacename = "jeddah";
+}
+else if(Gender == "Male" && Location == "Jeddah" && Service == "Tele Tamkeen")
+{
+	serviceid = "1311000011648726";
+	workspacename = "jeddah";
+}
+else if(Gender == "Female" && Location == "Jeddah" && Service == "Tele Tamkeen")
+{
+	serviceid = "1311000011648662";
+	workspacename = "jeddah";
+}
+else if(Gender == "Male" && Location == "Jeddah" && Service == "Re-Assessment")
+{
+	serviceid = "1311000000091092";
+	workspacename = "jeddah";
+}
+else if(Gender == "Female" && Location == "Jeddah" && Service == "Re-Assessment")
+{
+	serviceid = "1311000000091114";
+	workspacename = "jeddah";
+}
+else if(Gender == "Male" && Location == "Jeddah" && Service == "Supported Application")
+{
+	serviceid = "1311000000091136";
+	workspacename = "jeddah";
+}
+else if(Gender == "Female" && Location == "Jeddah" && Service == "Supported Application")
+{
+	serviceid = "1311000000091158";
+	workspacename = "jeddah";
+}
+else if(Gender == "Male" && Location == "Jeddah" && Service == "Follow up")
+{
+	serviceid = "1311000000091298";
+	workspacename = "jeddah";
+}
+else if(Gender == "Female" && Location == "Jeddah" && Service == "Follow up")
+{
+	serviceid = "1311000000091320";
+	workspacename = "jeddah";
+}
+else if(Gender == "Male" && Location == "Jeddah" && Service == "Intervention")
+{
+	serviceid = "1311000000091180";
+	workspacename = "jeddah";
+}
+else if(Gender == "Female" && Location == "Jeddah" && Service == "Intervention")
+{
+	serviceid = "1311000000091214";
+	workspacename = "jeddah";
+}
+else if(Gender == "Male" && Location == "Jeddah" && Service == "Online Assessment")
+{
+	serviceid = "1311000004516144";
+	workspacename = "jeddah";
+}
+else if(Gender == "Female" && Location == "Jeddah" && Service == "Online Assessment")
+{
+	serviceid = "1311000004516184";
+	workspacename = "jeddah";
+}
+else if(Gender == "Male" && Location == "Madinah" && Service == "Assessment")
+{
+	serviceid = "1311000000091366";
+	workspacename = "madinah";
+}
+else if(Gender == "Female" && Location == "Madinah" && Service == "Assessment")
+{
+	serviceid = "1311000000091402";
+	workspacename = "madinah";
+}
+else if(Gender == "Male" && Location == "Madinah" && Service == "Tele Tamkeen")
+{
+	serviceid = "1311000011648464";
+	workspacename = "madinah";
+}
+else if(Gender == "Female" && Location == "Madinah" && Service == "Tele Tamkeen")
+{
+	serviceid = "1311000011648570";
+	workspacename = "madinah";
+}
+else if(Gender == "Male" && Location == "Madinah" && Service == "Re-Assessment")
+{
+	serviceid = "1311000000091482";
+	workspacename = "madinah";
+}
+else if(Gender == "Female" && Location == "Madinah" && Service == "Re-Assessment")
+{
+	serviceid = "1311000000091504";
+	workspacename = "madinah";
+}
+else if(Gender == "Male" && Location == "Madinah" && Service == "Supported Application")
+{
+	serviceid = "1311000000091526";
+	workspacename = "madinah";
+}
+else if(Gender == "Female" && Location == "Madinah" && Service == "Supported Application")
+{
+	serviceid = "1311000000091548";
+	workspacename = "madinah";
+}
+else if(Gender == "Male" && Location == "Madinah" && Service == "Follow up")
+{
+	serviceid = "1311000000091688";
+	workspacename = "madinah";
+}
+else if(Gender == "Female" && Location == "Madinah" && Service == "Follow up")
+{
+	serviceid = "1311000000091710";
+	workspacename = "madinah";
+}
+else if(Gender == "Male" && Location == "Madinah" && Service == "Intervention")
+{
+	serviceid = "1311000000091570";
+	workspacename = "madinah";
+}
+else if(Gender == "Female" && Location == "Madinah" && Service == "Intervention")
+{
+	serviceid = "1311000000091604";
+	workspacename = "madinah";
+}
+else if(Gender == "Male" && Location == "Madinah" && Service == "Online Assessment")
+{
+	serviceid = "1311000002280373";
+	workspacename = "madinah";
+}
+else if(Gender == "Female" && Location == "Madinah" && Service == "Online Assessment")
+{
+	serviceid = "1311000004515626";
+	workspacename = "madinah";
+}
+else if(Gender == "Male" && Location == "Jizan" && Service == "Assessment")
+{
+	serviceid = "1311000000091756";
+	workspacename = "jizan";
+}
+else if(Gender == "Female" && Location == "Jizan" && Service == "Assessment")
+{
+	serviceid = "1311000000091792";
+	workspacename = "jizan";
+}
+else if(Gender == "Male" && Location == "Jizan" && Service == "Tele Tamkeen")
+{
+	serviceid = "1311000011658480";
+	workspacename = "jizan";
+}
+else if(Gender == "Female" && Location == "Jizan" && Service == "Tele Tamkeen")
+{
+	serviceid = "1311000011658540";
+	workspacename = "jizan";
+}
+else if(Gender == "Male" && Location == "Jizan" && Service == "Re-Assessment")
+{
+	serviceid = "1311000000091872";
+	workspacename = "jizan";
+}
+else if(Gender == "Female" && Location == "Jizan" && Service == "Re-Assessment")
+{
+	serviceid = "1311000000091894";
+	workspacename = "jizan";
+}
+else if(Gender == "Male" && Location == "Jizan" && Service == "Supported Application")
+{
+	serviceid = "1311000000091916";
+	workspacename = "jizan";
+}
+else if(Gender == "Female" && Location == "Jizan" && Service == "Supported Application")
+{
+	serviceid = "1311000000091938";
+	workspacename = "jizan";
+}
+else if(Gender == "Male" && Location == "Jizan" && Service == "Follow up")
+{
+	serviceid = "1311000000092078";
+	workspacename = "jizan";
+}
+else if(Gender == "Female" && Location == "Jizan" && Service == "Follow up")
+{
+	serviceid = "1311000000092100";
+	workspacename = "jizan";
+}
+else if(Gender == "Male" && Location == "Jizan" && Service == "Intervention")
+{
+	serviceid = "1311000000091960";
+	workspacename = "jizan";
+}
+else if(Gender == "Female" && Location == "Jizan" && Service == "Intervention")
+{
+	serviceid = "1311000000091994";
+	workspacename = "jizan";
+}
+else if(Gender == "Male" && Location == "Jizan" && Service == "Online Assessment")
+{
+	serviceid = "1311000004515846";
+	workspacename = "jizan";
+}
+else if(Gender == "Female" && Location == "Jizan" && Service == "Online Assessment")
+{
+	serviceid = "1311000004517054";
+	workspacename = "jizan";
+}
+else if(Gender == "Male" && Location == "Abha" && Service == "Assessment")
+{
+	serviceid = "1311000000092170";
+	workspacename = "abha";
+}
+else if(Gender == "Female" && Location == "Abha" && Service == "Assessment")
+{
+	serviceid = "1311000000092206";
+	workspacename = "abha";
+}
+else if(Gender == "Male" && Location == "Abha" && Service == "Tele Tamkeen")
+{
+	serviceid = "1311000011647092";
+	workspacename = "abha";
+}
+else if(Gender == "Female" && Location == "Abha" && Service == "Tele Tamkeen")
+{
+	serviceid = "1311000011647254";
+	workspacename = "abha";
+}
+else if(Gender == "Male" && Location == "Abha" && Service == "Re-Assessment")
+{
+	serviceid = "1311000000092286";
+	workspacename = "abha";
+}
+else if(Gender == "Female" && Location == "Abha" && Service == "Re-Assessment")
+{
+	serviceid = "1311000000092308";
+	workspacename = "abha";
+}
+else if(Gender == "Male" && Location == "Abha" && Service == "Supported Application")
+{
+	serviceid = "1311000000092330";
+	workspacename = "abha";
+}
+else if(Gender == "Female" && Location == "Abha" && Service == "Supported Application")
+{
+	serviceid = "1311000000092352";
+	workspacename = "abha";
+}
+else if(Gender == "Male" && Location == "Abha" && Service == "Follow up")
+{
+	serviceid = "1311000000092492";
+	workspacename = "abha";
+}
+else if(Gender == "Female" && Location == "Abha" && Service == "Follow up")
+{
+	serviceid = "1311000000092514";
+	workspacename = "abha";
+}
+else if(Gender == "Male" && Location == "Abha" && Service == "Intervention")
+{
+	serviceid = "1311000000092374";
+	workspacename = "abha";
+}
+else if(Gender == "Female" && Location == "Abha" && Service == "Intervention")
+{
+	serviceid = "1311000000092408";
+	workspacename = "abha";
+}
+else if(Gender == "Male" && Location == "Abha" && Service == "Online Assessment")
+{
+	serviceid = "1311000004516444";
+	workspacename = "abha";
+}
+else if(Gender == "Female" && Location == "Abha" && Service == "Online Assessment")
+{
+	serviceid = "1311000004516472";
+	workspacename = "abha";
+}
+else if(Service == "Online Assessment - Job Fair" && Location == "Madinah")
+{
+	serviceid = "1311000002280373";
+	workspacename = "madinah";
+}
+else if(Service == "Online Assessment - Job Fair" && Location == "Riyadh")
+{
+	serviceid = "1311000002381267";
+	workspacename = "riyadh";
+}
+//mobile services 
+else if(Gender == "Male" && Location == "Najran" && Service == "Mobile")
+{
+	serviceid = "1311000010069004";
+	workspacename = "najran";
+}
+else if(Gender == "Female" && Location == "Najran" && Service == "Mobile")
+{
+	serviceid = "1311000010068906";
+	workspacename = "najran";
+}
+else if(Gender == "Male" && Location == "Riyadh" && Service == "Mobile")
+{
+	serviceid = "1311000009972820";
+	workspacename = "riyadh";
+}
+else if(Gender == "Female" && Location == "Riyadh" && Service == "Mobile")
+{
+	serviceid = "1311000009980250";
+	workspacename = "riyadh";
+}
+else if(Gender == "Male" && Location == "Dammam" && Service == "Mobile")
+{
+	serviceid = "1311000009972714";
+	workspacename = "dammam";
+}
+else if(Gender == "Female" && Location == "Dammam" && Service == "Mobile")
+{
+	serviceid = "1311000009980150";
+	workspacename = "dammam";
+}
+else if(Gender == "Male" && Location == "Jeddah" && Service == "Mobile")
+{
+	serviceid = "1311000009972654";
+	workspacename = "jeddah";
+}
+else if(Gender == "Female" && Location == "Jeddah" && Service == "Mobile")
+{
+	serviceid = "1311000009980098";
+	workspacename = "jeddah";
+}
+else if(Gender == "Male" && Location == "Madinah" && Service == "Mobile")
+{
+	serviceid = "1311000010068794";
+	workspacename = "madinah";
+}
+else if(Gender == "Female" && Location == "Madinah" && Service == "Mobile")
+{
+	serviceid = "1311000010068682";
+	workspacename = "madinah";
+}
+else if(Gender == "Male" && Location == "Jizan" && Service == "Mobile")
+{
+	serviceid = "1311000010068598";
+	workspacename = "jizan";
+}
+else if(Gender == "Female" && Location == "Jizan" && Service == "Mobile")
+{
+	serviceid = "1311000010068508";
+	workspacename = "jizan";
+}
+else if(Gender == "Male" && Location == "Abha" && Service == "Mobile")
+{
+	serviceid = "1311000010068366";
+	workspacename = "abha";
+}
+else if(Gender == "Female" && Location == "Abha" && Service == "Mobile")
+{
+	serviceid = "1311000010068422";
+	workspacename = "abha";
+}
+/* USER INFO */
+userRes = zoho.crm.getRecordById("users",user_id).toMap();
+user_Role = userRes.get("users").get(0).get("profile").get("name");
+userFullName = userRes.get("users").get(0).get("full_name");
+userEmail = userRes.get("users").get(0).get("email");
+/* 	URL LINK */
+url = "https://maximusrhq.zohobookings.sa//#/" + serviceid + "?staffId=" + staffid + "&First Name=" + fName + "&Last Name=" + lName + "&Email=" + email + "&NIN=" + nin + "&Contact Number=" + phone + "&Source=" + source + "&Record Action User Name=" + userFullName + "&Record Action User Email=" + userEmail + "&Record Action User CRM ID=" + user_id + "&Exist Meeting ID=" + id + "&directBooknow=true";
+info url;
+updateRed = zoho.crm.updateRecord("Events",id,{"Meeting_URL":url});
+info updateRed;
+}
