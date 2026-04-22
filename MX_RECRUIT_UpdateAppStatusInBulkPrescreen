@@ -1,0 +1,140 @@
+if(AppStatus == "Pre Screen Session" || AppStatus == "Pre Screen Rescheduled" || AppStatus == "Pre Screen Did not Attended" || AppStatus == "Pre Screen Cancelled by Employer" || AppStatus == "Pre Screen Attended" || AppStatus == "Pre Screen Pass" || AppStatus == "Pre Screen Did Not Pass")
+{
+	criteria = "((Application_ID:equals:" + AppID + ")and(Job_Vacancies_ID:equals:" + jobID + "))";
+	enyrptCriteria = encodeUrl(criteria);
+	PrescreenInfo = invokeurl
+	[
+		url :"https://recruit.zoho.sa/recruit/v2/Pre_Screen_Attendees/search?criteria=" + enyrptCriteria
+		type :GET
+		connection:"recrruit2recruit"
+	];
+	if(PrescreenInfo.size() > 0)
+	{
+		for each  rec in PrescreenInfo.get("data")
+		{
+			PrescreenID = rec.get("id");
+			status = rec.get("Application_Status");
+			info PrescreenID;
+			prescreenMap = Map();
+			prescreenMap.put("Application_Status",AppStatus);
+			prescreenfieldUpdate = {"data":{prescreenMap}};
+			//info "Revoke--> " + Revoke;
+			if(status != "Pre Screen Rescheduled" && status != "Pre Screen Did not Attended" && status != "Pre Screen Cancelled by Employer" && status != "Pre Screen Did Not Pass")
+			{
+				Update_Prescreen = invokeurl
+				[
+					url :"https://recruit.zoho.sa/recruit/v2/Pre_Screen_Attendees/" + PrescreenID
+					type :PUT
+					parameters:prescreenfieldUpdate.toString()
+					connection:"recrruit2recruit"
+				];
+				info Update_Prescreen;
+			}
+		}
+	}
+}
+else if(AppStatus == "Prep Session Rescheduled" || AppStatus == "Prep Session Cancelled by Employer" || AppStatus == "Prep Session Did Not Attended" || AppStatus == "Prep Session Attended" || AppStatus == "Prep Session")
+{
+	criteria = "((Application_ID:equals:" + AppID + ")and(Job_Vacancies_ID:equals:" + jobID + "))";
+	enyrptCriteria = encodeUrl(criteria);
+	PrescreenInfo = invokeurl
+	[
+		url :"https://recruit.zoho.sa/recruit/v2/Prep_Session_Attendees/search?criteria=" + enyrptCriteria
+		type :GET
+		connection:"recrruit2recruit"
+	];
+	if(PrescreenInfo.size() > 0)
+	{
+		for each  rec in PrescreenInfo.get("data")
+		{
+			PrescreenID = rec.get("id");
+			status = rec.get("Application_Status");
+			info PrescreenID;
+			prescreenMap = Map();
+			prescreenMap.put("Application_Status",AppStatus);
+			prescreenfieldUpdate = {"data":{prescreenMap}};
+			//info "Revoke--> " + Revoke;
+			if(status != "Prep Session Rescheduled" && status != "Prep Session Did Not Attended" && status != "Prep Session Cancelled by Employer")
+			{
+				Update_Prescreen = invokeurl
+				[
+					url :"https://recruit.zoho.sa/recruit/v2/Prep_Session_Attendees/" + PrescreenID
+					type :PUT
+					parameters:prescreenfieldUpdate.toString()
+					connection:"recrruit2recruit"
+				];
+				info Update_Prescreen;
+			}
+		}
+	}
+}
+else if(AppStatus == "Screening Session" || AppStatus == "Screen Session Rescheduled" || AppStatus == "Screening Session Cancelled by Employer" || AppStatus == "Screening Session Did Not Attend" || AppStatus == "Screening Session Attend" || AppStatus == "Screening Pass" || AppStatus == "Screening Did Not Pass" || AppStatus == "Screening Approved" || AppStatus == "Screening Rejected")
+{
+	criteria = "((Application_ID:equals:" + AppID + ")and(Job_Vacancies_ID:equals:" + jobID + "))";
+	enyrptCriteria = encodeUrl(criteria);
+	PrescreenInfo = invokeurl
+	[
+		url :"https://recruit.zoho.sa/recruit/v2/Screening_Attendees/search?criteria=" + enyrptCriteria
+		type :GET
+		connection:"recrruit2recruit"
+	];
+	if(PrescreenInfo.size() > 0)
+	{
+		for each  rec in PrescreenInfo.get("data")
+		{
+			PrescreenID = rec.get("id");
+			status = rec.get("Application_Status");
+			info PrescreenID;
+			prescreenMap = Map();
+			prescreenMap.put("Application_Status",AppStatus);
+			prescreenfieldUpdate = {"data":{prescreenMap}};
+			//info "Revoke--> " + Revoke;
+			if(status != "Screen Session Rescheduled" && status != "Screening Session Cancelled by Employer" && status != "Screening Session Did Not Attend" && status != "Screening Did Not Pass" && status != "Screening Rejected")
+			{
+				Update_Prescreen = invokeurl
+				[
+					url :"https://recruit.zoho.sa/recruit/v2/Screening_Attendees/" + PrescreenID
+					type :PUT
+					parameters:prescreenfieldUpdate.toString()
+					connection:"recrruit2recruit"
+				];
+				info Update_Prescreen;
+			}
+		}
+	}
+}
+else if(AppStatus == "Interview" || AppStatus == "Interview Cancelled by Employer" || AppStatus == "Interview Did Not Attend" || AppStatus == "Interview Attended" || AppStatus == "Interview Rejected by Employer" || AppStatus == "Offer made" || AppStatus == "Offer accepted" || AppStatus == "Offer declined" || AppStatus == "Hired")
+{
+	criteria = "((Application_ID:equals:" + AppID + ")and(Job_Vacancies_ID:equals:" + jobID + "))";
+	enyrptCriteria = encodeUrl(criteria);
+	PrescreenInfo = invokeurl
+	[
+		url :"https://recruit.zoho.sa/recruit/v2/Interview_Attendees/search?criteria=" + enyrptCriteria
+		type :GET
+		connection:"recrruit2recruit"
+	];
+	if(PrescreenInfo.size() > 0)
+	{
+		for each  rec in PrescreenInfo.get("data")
+		{
+			PrescreenID = rec.get("id");
+			status = rec.get("Application_Status");
+			info PrescreenID;
+			prescreenMap = Map();
+			prescreenMap.put("Application_Status",AppStatus);
+			prescreenfieldUpdate = {"data":{prescreenMap}};
+			//info "Revoke--> " + Revoke;
+			if(status != "Interview Cancelled by Employer" && status != "Interview Did Not Attend" && status != "Interview Rejected by Employer" && status != "Offer declined" && status != "Hired")
+			{
+				Update_Prescreen = invokeurl
+				[
+					url :"https://recruit.zoho.sa/recruit/v2/Interview_Attendees/" + PrescreenID
+					type :PUT
+					parameters:prescreenfieldUpdate.toString()
+					connection:"recrruit2recruit"
+				];
+				info Update_Prescreen;
+			}
+		}
+	}
+}
