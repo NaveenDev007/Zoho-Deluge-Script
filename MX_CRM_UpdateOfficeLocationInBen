@@ -1,0 +1,11 @@
+string standalone.MX_UpdateOfficeLocationInBen(String name)
+{
+searchCriteria = "(Name:equals:" + name.toLowerCase() + ")";
+officeList = zoho.crm.searchRecords("Offices",searchCriteria,0,1);
+if(officeList.isEmpty())
+{
+	return "";
+}
+office = officeList.get(0);
+return office.get("Location_Link");
+}
