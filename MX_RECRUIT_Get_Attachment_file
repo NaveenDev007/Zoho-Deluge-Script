@@ -1,0 +1,28 @@
+response = invokeurl
+[
+	url :"https://recruit.zoho.sa/recruit/v2/Applications/" + appID
+	type :GET
+	connection:"zohorecruit"
+];
+AttachmentInfo = response.get("data").get(0).get("Is_Attachment_Present");
+info AttachmentInfo;
+if(AttachmentInfo == false)
+{
+	fieldMap = Map();
+	fieldMap.put("Attachment_Check",false);
+	fieldUpdate = {"data":{fieldMap}};
+}
+if(AttachmentInfo == true)
+{
+	fieldMap = Map();
+	fieldMap.put("Attachment_Check",true);
+	fieldUpdate = {"data":{fieldMap}};
+}
+Update_Info = invokeurl
+[
+	url :"https://recruit.zoho.sa/recruit/v2/Applications/" + appID
+	type :PUT
+	parameters:fieldUpdate.toString()
+	connection:"zohorecruit"
+];
+info Update_Info;
