@@ -1,0 +1,101 @@
+void automation.NPO_Evidence_autoExtention_ZohoSign(Int BenId,String Request_Id)
+{
+nowStr = zoho.currenttime.toString("HH:mm");
+respExtend = "Pending";
+BenInfo = zoho.crm.getRecordById("Ben_Engaments",BenId);
+// zohosignRecId = BenInfo.get("zoho_sign_request_id"); within the record
+// info zohosignRecId;
+Sing_Exp_Date = BenInfo.get("Signature_Expiration_Date");
+if(Sing_Exp_Date != null)
+{
+	S_Exp_Date = Sing_Exp_Date.toDate();
+}
+info "S_Exp_Date: " + S_Exp_Date;
+Current_Date = zoho.currentdate;
+info "Current_Date: " + Current_Date;
+Extention_Count = BenInfo.get("Date_Extention_Count");
+info "Extention_Count: " + Extention_Count;
+Last_Ext_Date = BenInfo.get("Last_Extension_Date");
+info "Last_Ext_Date: " + Last_Ext_Date;
+if(S_Exp_Date != null)
+{
+	extCount = ifnull(Extention_Count,0);
+	info "extCount: " + extCount;
+	// Map extension count → working days (0→3, 1→3, 2→7, else none)
+	extDays = 0;
+	if(extCount == 0)
+	{
+		extDays = 3;
+	}
+	else if(extCount == 1)
+	{
+		extDays = 3;
+	}
+	else if(extCount == 2)
+	{
+		extDays = 7;
+	}
+	else
+	{
+		extDays = 0;
+	}
+	if(extCount == 3)
+	{
+		info "Max auto-extensions already applied (3)";
+	}
+	anyExtended = false;
+	if(Request_Id != null && extCount < 3)
+	{
+		E_Date = S_Exp_Date.addBusinessDay(extDays).toString("dd MMMM yyyy");
+		info "New expiry: " + E_Date;
+		paramsMap = {"expire_by":E_Date};
+		resp = invokeurl
+		[
+			url :"https://sign.zoho.sa/api/v1/requests/" + Request_Id + "/extend"
+			type :PUT
+			parameters:paramsMap
+			connection:"zsign"
+		];
+		info "resp: " + resp;
+		respExtend = resp.get("message");
+		info respExtend;
+		Msg = "Expire date has extended successfully";
+		Remind = invokeurl
+		[
+			url :"https://sign.zoho.sa/api/v1/requests/" + Request_Id + "/remind"
+			type :POST
+			connection:"zsign"
+		];
+		info "Remind: " + Remind;
+		anyExtended = true;
+	}
+	if(anyExtended)
+	{
+		// Update CRM tracking fields
+		updateMap = Map();
+		reqStatus = standalone.AA_GetInfoSignDoc(BenId);
+		if(reqStatus == "inprogress")
+		{
+			updateMap.put("Date_Extention_Count",extCount + 1);
+			updateMap.put("Extended",true);
+			updateMap.put("Last_Extension_Date",E_Date.toDate());
+			//updateMap.put("Signature_Expiration_Date",E_Date.toString("yyyy-MM-dd") + "T12:00:00+03:00");
+			updateMap.put("Signature_Expiration_Date",E_Date.toString("yyyy-MM-dd") + "T" + nowStr + ":00+03:00");
+			updateMap.put("Extending_Status","Extended");
+		}
+		else
+		{
+			//updateMap.put("Extending_Status",respExtend);
+			updateMap.put("Extending_Status",reqStatus + ":" + respExtend);
+		}
+		//info updateMap;
+		update_BenInfo = zoho.crm.updateRecord("Ben_Engaments",BenId,updateMap);
+		info update_BenInfo;
+	}
+	else
+	{
+		info "Documents not eligible for extension";
+	}
+	info "Extention_Count: " + Extention_Count;
+}
+}
