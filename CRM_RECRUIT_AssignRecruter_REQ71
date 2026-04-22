@@ -1,0 +1,17 @@
+Job_vacancy = invokeurl
+[
+	url :"https://recruit.zoho.sa/recruit/v2/JobOpenings/" + id
+	type :GET
+	connection:"recrruit2recruit"
+];
+Account_Manager = Job_vacancy.get("data").get(0).get("Account_Manager");
+info Account_Manager;
+dataMap = {"data":{{"Assigned_Recruiters":Account_Manager}}};
+Update_JobOpenings = invokeurl
+[
+	url :"https://recruit.zoho.sa/recruit/v2/JobOpenings/" + id
+	type :PUT
+	parameters:dataMap.toString()
+	connection:"recrruit2recruit"
+];
+info Update_JobOpenings;
