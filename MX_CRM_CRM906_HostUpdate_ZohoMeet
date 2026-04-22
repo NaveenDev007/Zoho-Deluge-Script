@@ -1,0 +1,109 @@
+void automation.CRM906_HostUpdate_ZohoMeet1(Int id,String userName,String courseType)
+{
+/* GET THE USER ID */
+perPage = 200;
+controller = "".leftpad(50).toList("");
+userID = "";
+// Initialize outside so it's accessible later
+found = false;
+// The flag to stop loops
+for each index pageIdx in controller
+{
+	if(found)
+	{
+		break;
+	}
+	// Stop pagination loop
+	pageNumber = pageIdx + 1;
+	usersResp = invokeurl
+	[
+		url :"https://www.zohoapis.sa/crm/v2/users?type=AllUsers&per_page=" + perPage + "&page=" + pageNumber
+		type :GET
+		connection:"zcrm"
+	];
+	usersList = ifnull(usersResp.get("users"),List());
+	for each  u in usersList
+	{
+		fullname = ifnull(u.get("full_name"),"");
+		email = ifnull(u.get("email"),"");
+		if(fullname.containsIgnoreCase(userName) || email.containsIgnoreCase(userName))
+		{
+			userID = u.get("id").toString();
+			info "Found User ID: " + userID;
+			found = true;
+		}
+	}
+	// Only check for more records if we haven't found our user yet
+	if(!found)
+	{
+		infoObj = ifnull(usersResp.get("info"),Map());
+		more = ifnull(infoObj.get("more_records"),false);
+		if(!more)
+		{
+			found = true;
+			// Set to true just to exit the controller loop
+		}
+	}
+}
+/* ------------------- PROCEED ONLY IF USER ID FOUND ------------------- */
+if(userID != "")
+{
+	if(courseType == "Online")
+	{
+		userInfo = invokeurl
+		[
+			url :"https://www.zohoapis.sa/crm/v8/users/" + userID
+			type :GET
+			connection:"zcrm"
+		];
+		// Fix: CRM v2 API path for specific user
+		userArray = ifnull(userInfo.get("users"),List());
+		if(userArray.size() > 0)
+		{
+			zuid = userArray.get(0).get("zuid");
+			info "ZUID: " + zuid;
+		}
+	}
+	/* get access token for Edit the Meeting recs */
+	accessTokenResp = postUrl("https://accounts.zoho.sa/oauth/v2/token?client_id=1000.DAMMNZ8FTKYFQ6XNNMODRTD20MKKZA&grant_type=refresh_token&client_secret=4a83e6b3e47412a119b91b4dfbe7277b9af0f46af5&refresh_token=1000.4cb27d75b162d9a9e55f48d4878125ec.a752bf5c9743192b0473658ea8e5d00c","");
+	getAccessToken = accessTokenResp.get("access_token");
+	headerMap = Map();
+	headerMap.put("Content-Type","application/json;charset=UTF-8");
+	headerMap.put("Authorization","Zoho-oauthtoken " + getAccessToken);
+	instanceSessions = zoho.crm.getRelatedRecords("InstanceSchedule","Course_Instance",id);
+	updation = false;
+	for each  rec in instanceSessions
+	{
+		Start_Time = rec.get("Start_Time");
+		if(Start_Time < zoho.currenttime)
+		{
+			info "Session Past";
+		}
+		Meeting_Key = rec.get("Meeting_Key");
+		dataMap = Map();
+		dataMap.put("presenter",zuid);
+		sessionMap = Map();
+		sessionMap.put("session",dataMap);
+		UpdateMeet = invokeurl
+		[
+			url :"https://meeting.zoho.sa/api/v2/150000097326/sessions/" + Meeting_Key + ".json"
+			type :PUT
+			parameters:sessionMap.toString()
+			headers:headerMap
+		];
+		info UpdateMeet;
+		updation = true;
+	}
+	if(updation)
+	{
+		updateData = Map();
+		updateData.put("Admin",userID);
+		updatedIns = zoho.crm.updateRecord("Course_Instance",id,updateData);
+		info updatedIns;
+	}
+}
+else
+{
+	info "User not found. Process aborted.";
+}
+}
