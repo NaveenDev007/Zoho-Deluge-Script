@@ -1,0 +1,69 @@
+void automation.Soft_Validation(Int id)
+{
+BenInfo = zoho.crm.getRecordById("Ben_Engaments",id);
+ConId = BenInfo.get("Beneficiary").get("id");
+ContactInfo = zoho.crm.getRecordById("Contacts",ConId);
+Ben_Eng_Tech_Valid_Status = ContactInfo.get("Ben_Engagement_Technical_Validation_Status");
+contactId = ContactInfo.get("id");
+JobPlace = zoho.crm.getRelatedRecords("Job_Placements","Contacts",contactId);
+Status_Of_Validation = ContactInfo.get("Status_Of_Validation");
+Ben_NIN = BenInfo.get("Beneficiary_NIN");
+Ben_eng_status = BenInfo.get("Beneficiary_Engagement_Status");
+C_Name = BenInfo.get("Course_Catalog").get("name");
+C_Start_Date = BenInfo.get("Course_Start_Date");
+C_End_Date = BenInfo.get("Course_End_Date");
+C_Duration = BenInfo.get("Course_Duration");
+Certificate_Provider = BenInfo.get("Certificate_Provider");
+Partner_Evidence_Document = BenInfo.get("Partner_Evidence_Document");
+TC_External_Certificate = BenInfo.get("TC_External_Certificate");
+TC_Internal_Certificate = BenInfo.get("TC_Course_Certificate");
+Moodle_Course_ID = BenInfo.get("Moodle_Course_ID");
+Moodle_Course_Status = BenInfo.get("Moodle_Course_Status");
+Moodle_Course_ID = BenInfo.get("Moodle_Course_ID");
+Course_Category = BenInfo.get("Course_Category");
+Certificate_Validation_Status = BenInfo.get("Certificate_Validation_Status");
+/* ---------------ALL VARIABLES INFO---------------- */
+info "ConId : " + ConId;
+info "Ben_Eng_Tech_Valid_Status : " + Ben_Eng_Tech_Valid_Status;
+info "ContactId : " + contactId;
+info "JobPlace_Size : " + JobPlace.size();
+info "Status_Of_Validation : " + Status_Of_Validation;
+info "Ben_NIN : " + Ben_NIN;
+info "Ben_eng_status : " + Ben_eng_status;
+info "C_Name : " + C_Name;
+info "C_Start_Date : " + C_Start_Date;
+info "C_End_Date : " + C_End_Date;
+info "C_Duration : " + C_Duration;
+info "Certificate_Provider : " + Certificate_Provider;
+info "Partner_Evidence_Document : " + Partner_Evidence_Document;
+info "TC_External_Certificate : " + TC_External_Certificate;
+info "TC_Internal_Certificate : " + TC_Internal_Certificate;
+info "Moodle_Course_ID : " + Moodle_Course_ID;
+info "Moodle_Course_Status : " + Moodle_Course_Status;
+info "Course_Category : " + Course_Category;
+info "Certificate_Validation_Status : " + Certificate_Validation_Status;
+/* ----------UPDATE THE BLUPRINT STATUS------------ */
+if(JobPlace.size() == 0)
+{
+	/* ------------------SOFT SKILL VALIDATION--------------------- */
+	if(Course_Category == "Soft")
+	{
+		if(!isNull(Moodle_Course_ID) && Moodle_Course_Status == "Certified" && Certificate_Validation_Status == "Under Review" && !isNull(ConId) && !isNull(Ben_NIN) && !isNull(C_Name) && !isNull(C_Start_Date) && !isNull(C_End_Date) && !isNull(C_Duration) && !isNull(Certificate_Provider) && !isNull(TC_Internal_Certificate) && Status_Of_Validation == "Valid" && !isNull(Partner_Evidence_Document))
+		{
+			/* ------------UPDATE THE INTERVENTION VALIDATION METHODE STATUS------------- */
+			dataMap = Map();
+			dataMap.put("Interventions_Validation_Method","Auto");
+			dataMap.put("Certificate_Validation_Status","Valid");
+			updateBenRec = zoho.crm.updateRecord("Ben_Engaments",id,dataMap);
+			info updateBenRec;
+			sendmail
+			[
+				from :zoho.loginuserid
+				to :"nkumar@maximusgulf.com"
+				subject :"soft Test"
+				message :updateBenRec
+			]
+		}
+	}
+}
+}
