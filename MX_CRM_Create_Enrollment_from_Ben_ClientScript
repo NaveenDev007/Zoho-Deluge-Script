@@ -1,0 +1,25 @@
+string standalone.Create_Enrollment_from_Ben_ClientScript(String benID,String CI)
+{
+BenList = benID.toList();
+info BenList;
+for each  rec in BenList
+{
+	BenInfo = zoho.crm.getRecordById("Ben_Engaments",rec);
+	CID = BenInfo.get("Beneficiary").get("id");
+	E_name = BenInfo.get("Beneficiary").get("name");
+	//instance_id = zoho.crm.searchRecords("Course_Instance","(Name:equals:" + CI + ")").get(0).get("id");
+	instance_id = zoho.crm.getRecordById("Course_Instance",CI.toNumber());
+	info instance_id;
+	createRec = Map();
+	createRec.put("Name","Enroll 4 " + E_name);
+	createRec.put("Course_Instance_TC",CI.toNumber());
+	createRec.put("Contact_TC",CID);
+	createRec.put("Enrollment_Date",zoho.currentdate);
+	layoutid = {"id":"1806000215582802"};
+	createRec.put("Layout",layoutid);
+	createRec.put("Ben_engagement",rec);
+	createRec.put("Status","Enrolled");
+	createNewEnroll = zoho.crm.createRecord("Enrollment",createRec,{"trigger":{"workflow"}});
+}
+return createNewEnroll;
+}
