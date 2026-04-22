@@ -1,0 +1,46 @@
+string standalone.CheckOfficeLocationFromBenEng(String ConID)
+{
+ContactList = ConID.toList();
+info ContactList;
+MsgList = List();
+for each  rec in ContactList
+{
+	contactInfo = zoho.crm.getRecordById("Contacts",rec);
+	Office = contactInfo.get("Office").toString();
+	info Office;
+	First_Name = contactInfo.get("First_Name");
+	Last_Name = contactInfo.get("Last_Name");
+	Eligibility = contactInfo.get("Eligibility_Status");
+	if(Office != null && Office != "")
+	{
+		Off_Location = standalone.MX_UpdateOfficeLocationInBen(Office);
+		// Build criteria message
+		if(Off_Location != null && Off_Location != "" && Eligibility == "Eligible for Program")
+		{
+			Criteria = "Validated Successfully";
+		}
+		else if((Eligibility == null || Eligibility == "" || Eligibility != "Eligible for Program") && (Off_Location == null || Off_Location == ""))
+		{
+			Criteria = "Office Location is Not Available and Eligibility Criteria Not Match for these ";
+			MsgList.add("BEN: " + First_Name + " " + Last_Name);
+		}
+		else if(Off_Location == null || Off_Location == "")
+		{
+			Criteria = "Office Location is Not Available in Office Master for these ";
+			MsgList.add("BEN: " + First_Name + " " + Last_Name);
+		}
+		else if(Eligibility == null || Eligibility == "" || Eligibility != "Eligible for Program")
+		{
+			Criteria = "Eligibility Criteria Not Match for these ";
+			MsgList.add("BEN: " + First_Name + " " + Last_Name);
+		}
+	}
+	else
+	{
+		Criteria = "Office Name is Not Available for these ";
+		MsgList.add("BEN: " + First_Name + " " + Last_Name);
+	}
+}
+// Return all messages as a single string
+return Criteria + MsgList.toString();
+}
