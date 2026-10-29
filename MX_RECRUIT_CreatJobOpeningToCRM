@@ -1,0 +1,461 @@
+/*  ZOHO RECRUIT APPLICATION HIRED 
+1. READ THE HIRED APPLICATION
+2. CANCEL OTHER NON-FINAL APPLICATIONS
+3. CREATE THE REQUIRED CRM JOB PLACEMENT RECORDS*/
+/*  -------------------- CONFIGURATION -------------------- */
+recruitApiBase = "https://recruit.zoho.sa/recruit/v2/";
+crmApiBase = "https://www.zohoapis.sa/crm/v8/";
+standardLayoutId = "1806000020214464";
+maharatLayoutId = "1806000676660177";
+//AppID = 447000012155400;
+triggerApplicationId = ifnull(AppID,"").toString().trim();
+/*  -------------------- DEFAULT VALUES -------------------- */
+candidateId = "";
+jobOpeningId = "";
+candidateEmail = "";
+startDate = "";
+nominationDate = "";
+interviewDate = "";
+salary = null;
+jobTitle = "";
+employerRecruitId = "";
+employerName = "";
+employerEmail = "";
+vacancySource = "";
+candidateContract = "";
+beneficiaryNIN = "";
+journeyContract = "";
+benEngagementId = "";
+benBeneficiaryId = "";
+crmBeneficiaryId = "";
+applicationFound = false;
+candidateFound = false;
+// ============================================================
+/* 1. VALIDATE INPUT AND GET THE TRIGGERING APPLICATION */
+// ============================================================
+if(triggerApplicationId == "")
+{
+	info "ERROR | Application ID is missing.";
+}
+else
+{
+	applicationResponse = invokeurl
+	[
+		url :recruitApiBase + "Applications/" + triggerApplicationId
+		type :GET
+		connection:"zrecruit"
+	];
+	applicationData = ifnull(applicationResponse.get("data"),List());
+	if(applicationData.size() == 0)
+	{
+		info "ERROR | Application not found: " + triggerApplicationId;
+		info applicationResponse;
+	}
+	else
+	{
+		applicationFound = true;
+		applicationRecord = applicationData.get(0);
+		candidateEmail = ifnull(applicationRecord.get("Email"),"");
+		jobTitle = ifnull(applicationRecord.get("Potential_Name"),"");
+		salary = applicationRecord.get("Job_Salary");
+		candidateId = ifnull(applicationRecord.get("$Candidate_Id"),"").toString();
+		jobOpeningId = ifnull(applicationRecord.get("$Job_Opening_Id"),"").toString();
+		clientLookup = applicationRecord.get("Client_Name");
+		if(clientLookup != null)
+		{
+			employerRecruitId = ifnull(clientLookup.get("id"),"").toString();
+		}
+		startDateValue = applicationRecord.get("Job_Start_Date");
+		if(startDateValue != null)
+		{
+			startDate = startDateValue.toString("yyyy-MM-dd");
+		}
+		nominationDateValue = applicationRecord.get("Nomination_Date");
+		if(nominationDateValue != null)
+		{
+			nominationDate = nominationDateValue.toString("yyyy-MM-dd");
+		}
+		interviewDateValue = applicationRecord.get("Interview_From_Date");
+		if(interviewDateValue != null)
+		{
+			interviewDate = interviewDateValue.toString("yyyy-MM-dd'T'HH:mm:ssXXX");
+		}
+		info "Trigger Application ID: " + triggerApplicationId;
+		info "Candidate ID: " + candidateId;
+		info "Job Opening ID: " + jobOpeningId;
+	}
+	// ============================================================
+	/* 	 2. GET THE JOB OPENING AND EMPLOYER DETAILS */
+	// ============================================================
+	if(applicationFound && jobOpeningId != "")
+	{
+		jobOpeningResponse = invokeurl
+		[
+			url :recruitApiBase + "Job_Openings/" + jobOpeningId
+			type :GET
+			connection:"zrecruit"
+		];
+		jobOpeningData = ifnull(jobOpeningResponse.get("data"),List());
+		if(jobOpeningData.size() > 0)
+		{
+			jobOpeningRecord = jobOpeningData.get(0);
+			vacancySource = ifnull(jobOpeningRecord.get("Vacancy_Source"),"");
+			if(vacancySource == "Managed by ES")
+			{
+				vacancySource = "Managed";
+			}
+			else if(vacancySource == "Managed by CM")
+			{
+				vacancySource = "Case Manager - Managed";
+			}
+			employerContactLookup = jobOpeningRecord.get("Contact_Name");
+			if(employerContactLookup != null)
+			{
+				employerContactId = ifnull(employerContactLookup.get("id"),"").toString();
+				if(employerContactId != "")
+				{
+					employerContactResponse = invokeurl
+					[
+						url :recruitApiBase + "Contacts/" + employerContactId
+						type :GET
+						connection:"zrecruit"
+					];
+					employerContactData = ifnull(employerContactResponse.get("data"),List());
+					if(employerContactData.size() > 0)
+					{
+						employerContactRecord = employerContactData.get(0);
+						employerName = ifnull(employerContactRecord.get("Full_Name"),"");
+						employerEmail = ifnull(employerContactRecord.get("Email"),"");
+					}
+					else
+					{
+						info "WARNING | Employer Contact not found: " + employerContactId;
+					}
+				}
+			}
+		}
+		else
+		{
+			info "WARNING | Job Opening not found: " + jobOpeningId;
+			info jobOpeningResponse;
+		}
+	}
+	// ============================================================
+	// 3. GET THE CANDIDATE
+	// ============================================================
+	if(applicationFound && candidateId != "")
+	{
+		candidateResponse = invokeurl
+		[
+			url :recruitApiBase + "Candidates/" + candidateId
+			type :GET
+			connection:"zrecruit"
+		];
+		candidateData = ifnull(candidateResponse.get("data"),List());
+		if(candidateData.size() > 0)
+		{
+			candidateFound = true;
+			candidateRecord = candidateData.get(0);
+			candidateContract = ifnull(candidateRecord.get("Contract"),"");
+			beneficiaryNIN = ifnull(candidateRecord.get("Beneficiary_NIN"),"").toString().trim();
+		}
+		else
+		{
+			info "ERROR | Candidate not found: " + candidateId;
+			info candidateResponse;
+		}
+	}
+	// ============================================================
+	// 4. GET THE CURRENT OPEN JOURNEY
+	// ============================================================
+	if(candidateFound)
+	{
+		journeyResponse = invokeurl
+		[
+			url :recruitApiBase + "Candidates/" + candidateId + "/Journeys"
+			type :GET
+			connection:"zrecruit"
+		];
+		journeys = ifnull(journeyResponse.get("data"),List());
+		for each  journeyRecord in journeys
+		{
+			journeyStatus = ifnull(journeyRecord.get("Status"),"");
+			if(journeyStatus == "Open")
+			{
+				journeyContract = ifnull(journeyRecord.get("Contract"),"");
+				benEngagementId = ifnull(journeyRecord.get("Ben_Eng_Id"),"").toString().trim();
+				break;
+			}
+		}
+		info "Journey Contract: " + journeyContract;
+		info "Ben Engagement ID: " + benEngagementId;
+	}
+	// ============================================================
+	// 5. GET THE MAHARAT OR MUSIC HOUSE BENEFICIARY FROM THE BEN ENGAGEMENT
+	// ============================================================
+	if(benEngagementId != "")
+	{
+		benEngagementResponse = invokeurl
+		[
+			url :crmApiBase + "Ben_Engaments/" + benEngagementId
+			type :GET
+			connection:"zrecruit"
+		];
+		benEngagementData = ifnull(benEngagementResponse.get("data"),List());
+		if(benEngagementData.size() > 0)
+		{
+			benEngagementRecord = benEngagementData.get(0);
+			beneficiaryLookup = benEngagementRecord.get("Beneficiary");
+			if(beneficiaryLookup != null)
+			{
+				benBeneficiaryId = ifnull(beneficiaryLookup.get("id"),"").toString();
+			}
+		}
+		else
+		{
+			info "WARNING | Ben Engagement not found: " + benEngagementId;
+			info benEngagementResponse;
+		}
+	}
+	// ============================================================
+	// 6.CANCEL OTHER ASSOCIATED APPLICATIONS
+	// ============================================================
+	if(candidateFound)
+	{
+		associatedResponse = invokeurl
+		[
+			url :recruitApiBase + "Candidates/" + candidateId + "/associate"
+			type :GET
+			connection:"zrecruit"
+		];
+		associatedApplications = ifnull(associatedResponse.get("data"),List());
+		for each  associatedRecord in associatedApplications
+		{
+			associatedApplicationId = ifnull(associatedRecord.get("$application_id"),"").toString();
+			associatedStatus = ifnull(associatedRecord.get("Application_Status"),"");
+			// Do not touch:
+			// 1. The triggering Hired Application
+			// 2. Any Application already Hired
+			// 3. Any Application already Canceled-Placed
+			if(associatedApplicationId != "" && associatedApplicationId != triggerApplicationId && associatedStatus != "Hired" && associatedStatus != "Canceled-Placed")
+			{
+				info "Processing associated Application: " + associatedApplicationId + " | Previous status: " + associatedStatus;
+				revokeBlueprintResponse = invokeurl
+				[
+					url :recruitApiBase + "Applications/" + associatedApplicationId + "/blueprint/revoke"
+					type :PUT
+					connection:"zrecruit"
+				];
+				revokeData = ifnull(revokeBlueprintResponse.get("data"),List());
+				revokeStatus = "";
+				revokeCode = "";
+				if(revokeData.size() > 0)
+				{
+					revokeResult = revokeData.get(0);
+					revokeStatus = ifnull(revokeResult.get("status"),"");
+					revokeCode = ifnull(revokeResult.get("code"),"");
+				}
+				// CANNOT_PERFORM_ACTION can mean that no Blueprint is active.
+				if(revokeStatus == "success" || revokeCode == "CANNOT_PERFORM_ACTION")
+				{
+					// Save the old status BEFORE changing Application_Status.
+					previousStatusRecord = Map();
+					previousStatusRecord.put("Previous_App_Status",associatedStatus);
+					previousStatusList = List();
+					previousStatusList.add(previousStatusRecord);
+					previousStatusPayload = Map();
+					previousStatusPayload.put("data",previousStatusList);
+					previousStatusResponse = invokeurl
+					[
+						url :recruitApiBase + "Applications/" + associatedApplicationId
+						type :PUT
+						parameters:previousStatusPayload.toString()
+						connection:"zrecruit"
+					];
+					previousStatusData = ifnull(previousStatusResponse.get("data"),List());
+					previousStatusSaved = false;
+					if(previousStatusData.size() > 0)
+					{
+						previousStatusResult = previousStatusData.get(0);
+						if(ifnull(previousStatusResult.get("status"),"") == "success")
+						{
+							previousStatusSaved = true;
+						}
+					}
+					if(previousStatusSaved)
+					{
+						statusIdList = List();
+						statusIdList.add(associatedApplicationId);
+						statusRecord = Map();
+						statusRecord.put("ids",statusIdList);
+						statusRecord.put("Application_Status","Canceled-Placed");
+						statusRecordList = List();
+						statusRecordList.add(statusRecord);
+						statusPayload = Map();
+						statusPayload.put("data",statusRecordList);
+						statusUpdateResponse = invokeurl
+						[
+							url :recruitApiBase + "Applications/status"
+							type :PUT
+							parameters:statusPayload.toString()
+							connection:"zrecruit"
+						];
+						info "Application status update | " + associatedApplicationId + " | " + statusUpdateResponse;
+					}
+					else
+					{
+						info "ERROR | Previous_App_Status was not saved. " + "Application status was not changed: " + associatedApplicationId;
+						info previousStatusResponse;
+					}
+				}
+				else
+				{
+					info "ERROR | Blueprint could not be revoked for Application: " + associatedApplicationId;
+					info revokeBlueprintResponse;
+				}
+			}
+		}
+	}
+	// ============================================================
+	// 7. FIND THE STANDARD CRM BENEFICIARY BY NIN
+	// ============================================================
+	if(beneficiaryNIN != "")
+	{
+		crmCriteria = "(Beneficiary_NIN:equals:" + beneficiaryNIN + ")";
+		crmContactResponse = invokeurl
+		[
+			url :crmApiBase + "Contacts/search"
+			type :GET
+			parameters:{"criteria":crmCriteria}
+			connection:"zrecruit"
+		];
+		crmContactData = ifnull(crmContactResponse.get("data"),List());
+		if(crmContactData.size() > 0)
+		{
+			crmBeneficiaryId = ifnull(crmContactData.get(0).get("id"),"").toString();
+		}
+		else
+		{
+			info "WARNING | No CRM Contact found for Beneficiary NIN: " + beneficiaryNIN;
+		}
+	}
+	else
+	{
+		info "WARNING | Beneficiary_NIN is empty for Candidate: " + candidateId;
+	}
+	// ============================================================
+	// 8. DETERMINE THE REQUIRED JOB PLACEMENT LAYOUTS
+	// ============================================================
+	layoutList = List();
+	if(candidateContract == "Tamkeen Clinics")
+	{
+		if(journeyContract == "Maharat" || journeyContract == "Music House")
+		{
+			layoutList.add(standardLayoutId);
+			layoutList.add(maharatLayoutId);
+		}
+		else
+		{
+			// Includes blank journey contract and Tamkeen Clinics journey.
+			layoutList.add(standardLayoutId);
+		}
+	}
+	else if(candidateContract == "Maharat" || candidateContract == "Music House")
+	{
+		layoutList.add(maharatLayoutId);
+	}
+	else
+	{
+		info "WARNING | No layout mapping exists for Candidate Contract: " + candidateContract;
+	}
+	// ============================================================
+	// 9. CREATE THE JOB PLACEMENT RECORDS
+	// ============================================================
+	for each  layoutId in layoutList
+	{
+		placementContract = candidateContract;
+		placementBeneficiaryId = crmBeneficiaryId;
+		if(layoutId == maharatLayoutId && (journeyContract == "Maharat" || journeyContract == "Music House"))
+		{
+			placementContract = journeyContract;
+			placementBeneficiaryId = benBeneficiaryId;
+		}
+		else if(layoutId == maharatLayoutId && (candidateContract == "Maharat" || candidateContract == "Music House"))
+		{
+			placementContract = candidateContract;
+			if(benBeneficiaryId != "")
+			{
+				placementBeneficiaryId = benBeneficiaryId;
+			}
+		}
+		if(placementBeneficiaryId == "")
+		{
+			info "ERROR | Job Placement skipped. Beneficiary ID is unavailable." + " | Layout: " + layoutId + " | Contract: " + placementContract;
+		}
+		else
+		{
+			jobPlacementMap = Map();
+			jobPlacementMap.put("Contract",placementContract);
+			jobPlacementMap.put("Beneficiary",placementBeneficiaryId);
+			jobPlacementMap.put("Maharat_Ben_Eng_ID",benEngagementId);
+			jobPlacementMap.put("Job_Title",jobTitle);
+			jobPlacementMap.put("Beneficiary_NIN",beneficiaryNIN);
+			jobPlacementMap.put("Job_Source",vacancySource);
+			jobPlacementMap.put("Email",candidateEmail);
+			jobPlacementMap.put("Salary",salary);
+			jobPlacementMap.put("Employer_Name",employerName);
+			jobPlacementMap.put("Employer_Recruit_Id",employerRecruitId);
+			jobPlacementMap.put("Employer_Email",employerEmail);
+			jobPlacementMap.put("Name",jobTitle);
+		}
+		// Avoid sending empty date strings to CRM date fields
+		if(startDate != "")
+		{
+			jobPlacementMap.put("Start_Date",startDate);
+		}
+		if(nominationDate != "")
+		{
+			jobPlacementMap.put("Nomination_Date",nominationDate);
+		}
+		if(interviewDate != "")
+		{
+			jobPlacementMap.put("Interview_Date",interviewDate);
+		}
+		layoutMap = Map();
+		layoutMap.put("id",layoutId);
+		jobPlacementMap.put("Layout",layoutMap);
+		jobPlacementList = List();
+		jobPlacementList.add(jobPlacementMap);
+		jobPlacementPayload = Map();
+		jobPlacementPayload.put("data",jobPlacementList);
+		createJobPlacementResponse = invokeurl
+		[
+			url :crmApiBase + "Job_Placements"
+			type :POST
+			parameters:jobPlacementPayload.toString()
+			connection:"zrecruit"
+		];
+		createJobPlacementData = ifnull(createJobPlacementResponse.get("data"),List());
+		if(createJobPlacementData.size() > 0)
+		{
+			createJobPlacementResult = createJobPlacementData.get(0);
+			if(ifnull(createJobPlacementResult.get("status"),"") == "success")
+			{
+				createdPlacementDetails = ifnull(createJobPlacementResult.get("details"),Map());
+				createdPlacementId = ifnull(createdPlacementDetails.get("id"),"");
+				info "SUCCESS | Job Placement created: " + createdPlacementId + " | Layout: " + layoutId;
+			}
+			else
+			{
+				info "ERROR | Job Placement creation failed | Layout: " + layoutId;
+				info createJobPlacementResponse;
+			}
+		}
+		else
+		{
+			info "ERROR | Unexpected Job Placement response | Layout: " + layoutId;
+			info createJobPlacementResponse;
+		}
+	}
+}
+//return "";
